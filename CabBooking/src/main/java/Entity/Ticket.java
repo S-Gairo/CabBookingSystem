@@ -6,6 +6,11 @@ public class Ticket {
     int[] destination;
     boolean status;
 
+    public Ticket(){
+        source = new int[2];
+        destination = new int[2];
+    }
+
     public String getDriver() {
         return driver;
     }
@@ -39,4 +44,5 @@ public class Ticket {
     public void setStatus(boolean status) {
         this.status = status;
     }
+
 }

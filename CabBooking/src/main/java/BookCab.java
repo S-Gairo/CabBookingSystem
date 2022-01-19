@@ -4,6 +4,8 @@ import Repository.DriverRepository;
 import Repository.UserRepository;
 import Service.CabService;
 import BookingException.BookingException;
+
+import java.util.HashMap;
 import java.util.List;
 
 public class BookCab {
@@ -13,77 +15,66 @@ public class BookCab {
         cabService = new CabService();
     }
 
-    public void addUser() {
-        cabService.addUser();
+    public void addUser(String name, int age, char gender) throws BookingException {
+        cabService.addUser(name, age, gender);
         System.out.println("User Added");
-
     }
 
-    public void addDriver() {
-        cabService.addDriver();
+    public void addDriver(String name, int age, char gender,String licenceNumber, int location_x, int location_y) throws BookingException {
+        cabService.addDriver(name, age, gender, licenceNumber, location_x, location_y);
         System.out.println("Driver Added");
     }
 
-    public void findRide() {
-        String name = "user";
-        int source_x = 0;
-        int source_y = 0;
-        int destination_x = 0;
-        int destination_y = 0;
-
+    public List<String> findRide(String name, int source_x, int source_y, int dest_x, int dest_y) throws BookingException {
         boolean userStatus = cabService.getUserStatus(name);
         if(userStatus){
-            //error - user is already riding
+            throw new BookingException("User is already in ride");
         }
 
         // generate ticket for ride
-        cabService.generateTicket(name,source_x,source_y,destination_x,destination_y);
+        cabService.generateTicket(name,source_x,source_y,dest_x,dest_y);
 
         //get driver list to choose from by user
-        List<String> list = cabService.findRide(source_x,source_y);
-        if(list.size()!=0){
-            System.out.println("Choose Driver :");
-            System.out.println(list);
+        List<String> driverList = cabService.findRide(source_x,source_y);
+        if(driverList.size()!=0){
+            System.out.println("Available Drivers :");
+            System.out.println(driverList);
         }
         else{
             System.out.println("No Drivers Available");
         }
+        return driverList;
     }
 
-    public void chooseRide() {
-        String user = "user";
-        String driver = "driver";
-        //add attributes from input
+    public void chooseRide(String user, String driver) throws BookingException {
         cabService.chooseRide(user, driver);
         System.out.println("Ride has started");
     }
 
 
-    public void updateUserLocation() {
-        String name = "user";
-        int x=0;
-        int y=0;
+    public void updateUserLocation(String name , int x, int y) throws BookingException {
         cabService.updateUserLocation(name,x,y);
         System.out.println("User location updated successfully");
     }
 
-    public void updateDriverLocation() {
-        String name = "driver";
-        int x=0;
-        int y=0;
+    public void updateDriverLocation(String name , int x, int y) throws BookingException {
         cabService.updateDriverLocation(name,x,y);
         System.out.println("Driver location updated successfully");
     }
 
-    public double calculateBill() {
-        String username = "user";
-        double bill = cabService.calculateBill(username);
+    public double calculateBill(String name) throws BookingException {
+        double bill = cabService.calculateBill(name);
         System.out.println("Bill Amount is: "+ bill);
         return bill;
     }
 
-    public void findTotalEarnings() {
+    public HashMap<String,Double> findTotalEarnings() throws BookingException {
         System.out.println("Earnings by all drivers:- ");
-        cabService.findTotalEarnings();
+        return cabService.findTotalEarnings();
+    }
+
+    public void changeDriverStatus(String name,boolean status) throws BookingException {
+        cabService.changeDriverStatus(name,status);
     }
 }
+

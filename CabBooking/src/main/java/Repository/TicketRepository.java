@@ -1,5 +1,6 @@
 package Repository;
 
+import BookingException.BookingException;
 import Entity.Ticket;
 
 import java.util.HashMap;
@@ -26,14 +27,15 @@ public class TicketRepository {
         ticketList.put(name,ticket);
     }
 
-    public Ticket getTicket(String user) {
+    public Ticket getTicket(String user) throws BookingException {
         if(!ticketList.containsKey(user)){
-            //error - no ticket for user, find ride before choosing
+            throw new BookingException("Invalid Operation. Must find ride before choosing.");
         }
         return ticketList.get(user);
     }
 
     public void changeTicketStatus(String user, boolean status) {
+
         Ticket ticket = ticketList.get(user);
         ticket.setStatus(status);
     }

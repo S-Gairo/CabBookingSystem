@@ -1,5 +1,6 @@
 package Service;
 
+import BookingException.BookingException;
 import Entity.Driver;
 import Entity.Ticket;
 import Entity.User;
@@ -15,6 +16,7 @@ public class CabService {
     private DriverRepository driverRepository;
     private TicketRepository ticketRepository;
     int priceMultiplier = 10;
+    int maxDistance = 5;
 
     public CabService(){
         userRepository = new UserRepository();
@@ -22,23 +24,29 @@ public class CabService {
         ticketRepository = new TicketRepository();
     }
 
-    public void addUser(){
+    public void addUser(String name, int age, char gender) throws BookingException {
         User user = new User();
-        // add attributes
-        if(userRepository.getUserList().containsKey(user.getName())){
-            //error - user exists
+        user.setName(name);
+        if(userRepository.userExists(name)){
+            throw new BookingException("User already exists");
         }
+        user.setAge(age);
+        user.setGender(gender);
+
         userRepository.addUser(user);
     }
 
-    public void addDriver() {
+    public void addDriver(String name, int age, char gender,String licenceNumber, int location_x, int location_y) throws BookingException {
         Driver driver = new Driver();
-        //set corresponding values
-        if(driverRepository.getDriverList().containsKey(driver.getName())){
-            //error - driver exists
+        driver.setName(name);
+        if(driverRepository.driverExists(name)){
+            throw new BookingException("Driver already exists");
         }
+        driver.setAge(age);
+        driver.setGender(gender);
+        driver.setLicenceNumber(licenceNumber);
+        driver.setLocation(location_x,location_y);
         driverRepository.addDriver(driver);
-        driverRepository.createEarnings(driver.getName());
     }
 
     public List<String> findRide(int x, int y) {
@@ -46,21 +54,29 @@ public class CabService {
     }
 
 
-    public void chooseRide(String user, String driver) {
+    public void chooseRide(String user, String driver) throws BookingException {
+
         //get ticket
         Ticket ticket = ticketRepository.getTicket(user);
         boolean driverStatus = driverRepository.getDriverStatus(driver);
         boolean userStatus = userRepository.getUserStatus(user);
 
         if(ticket.getStatus() || driverStatus || userStatus){
-            //error - entity/entities already in ride
+            throw new BookingException("Ride already started or Unavailable");
+        }
+
+        //Validate driver
+        int[] source = ticket.getSource();
+        int source_x = source[0];
+        int source_y = source[1];
+        int[] driverLocation = driverRepository.getDriverLocation(driver);
+        double distance = getDistance(source,driverLocation);
+        if(distance>maxDistance){
+            throw new BookingException("Invalid driver selected");
         }
 
         //select driver and send driver to user destination
         ticket.setDriver(driver);
-        int[] source = ticket.getSource();
-        int source_x = source[0];
-        int source_y = source[1];
         updateDriverLocation(driver,source_x,source_y);
 
         //start ride
@@ -69,24 +85,24 @@ public class CabService {
         ticketRepository.changeTicketStatus(user,true);
     }
 
-    public void updateUserLocation(String name, int x, int y) {
+    public void updateUserLocation(String name, int x, int y) throws BookingException {
         userRepository.updateUserLocation(name,x,y);
     }
 
-    public void updateDriverLocation(String name, int x, int y) {
+    public void updateDriverLocation(String name, int x, int y) throws BookingException {
         driverRepository.updateDriverLocation(name,x,y);
     }
 
-    public boolean getUserStatus(String name) {
+    public boolean getUserStatus(String name) throws BookingException {
         return userRepository.getUserStatus(name);
     }
 
-    public double calculateBill(String name) {
+    public double calculateBill(String name) throws BookingException {
         //get ticket.
         Ticket ticket = ticketRepository.getTicket(name);
         boolean ticketStatus = ticket.getStatus();
         if(!ticketStatus){
-            // ride has already ended
+            throw new BookingException("Ride has already ended");
         }
         String driverName = ticket.getDriver();
         //calculate price.
@@ -100,6 +116,11 @@ public class CabService {
         driverRepository.changeDriverStatus(driverName,false);
         userRepository.changeUserStatus(name,false);
         ticketRepository.changeTicketStatus(name,false);
+
+        // change user and driver location
+        int x = destination[0], y = destination[1];
+        updateDriverLocation(driverName,x,y);
+        updateUserLocation(name,x,y);
         return price;
     }
 
@@ -108,11 +129,15 @@ public class CabService {
         return Math.sqrt(distanceSq);
     }
 
-    public void generateTicket(String name, int source_x,int source_y,int destination_x,int destination_y) {
+    public void generateTicket(String name, int source_x,int source_y,int destination_x,int destination_y){
         ticketRepository.generateTicket(name,source_x,source_y,destination_x,destination_y);
     }
 
-    public void findTotalEarnings() {
-        driverRepository.findTotalEarnings();
+    public HashMap<String,Double> findTotalEarnings() {
+        return driverRepository.findTotalEarnings();
+    }
+
+    public void changeDriverStatus(String name, boolean status) throws BookingException {
+        driverRepository.changeDriverStatus(name,status);
     }
 }

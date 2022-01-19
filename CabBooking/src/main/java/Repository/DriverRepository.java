@@ -1,5 +1,6 @@
 package Repository;
 
+import BookingException.BookingException;
 import Entity.Driver;
 
 import java.util.ArrayList;
@@ -34,19 +35,18 @@ public class DriverRepository {
     }
 
     public void addEarnings(String name, double amount){
-        if(!earnings.containsKey(name)){
-            //error
-        }
         double total = earnings.get(name)+amount;
         earnings.put(name,total);
 
     }
+
     public void createEarnings(String name){
         earnings.put(name,0.0);
     }
 
     public void addDriver(Driver driver){
         this.driverList.put(driver.getName(),driver);
+        createEarnings(driver.getName());
     }
 
     public List<String> findRide(int x, int y) {
@@ -68,21 +68,40 @@ public class DriverRepository {
         return Math.sqrt(distanceSq);
     }
 
-    public void updateDriverLocation(String name, int x, int y) {
+    public void updateDriverLocation(String name, int x, int y) throws BookingException {
+        if(!driverExists(name)){
+            throw new BookingException("Driver does not exist.");
+        }
         Driver driver = driverList.get(name);
         driver.setLocation(x,y);
     }
 
-    public void changeDriverStatus(String name, boolean status) {
+    public void changeDriverStatus(String name, boolean status) throws BookingException {
+        if(!driverExists(name)){
+            throw new BookingException("Driver does not exist.");
+        }
         Driver driver = driverList.get(name);
         driver.setStatus(status);
     }
 
-    public boolean getDriverStatus(String name){
+    public boolean getDriverStatus(String name) throws BookingException {
+        if(!driverExists(name)){
+            throw new BookingException("Driver does not exist.");
+        }
         return driverList.get(name).getStatus();
     }
 
-    public void findTotalEarnings() {
-        earnings.forEach((k,v) -> System.out.println("Driver " + k + "earned Rs." + v));
+    public HashMap<String, Double> findTotalEarnings() {
+        earnings.forEach((k,v) -> System.out.println(k + " earned Rs." + v));
+        return earnings;
+
+    }
+
+    public boolean driverExists(String name) {
+        return driverList.containsKey(name);
+    }
+
+    public int[] getDriverLocation(String driver) {
+        return driverList.get(driver).getLocation();
     }
 }
